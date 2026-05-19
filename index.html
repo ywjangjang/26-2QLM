@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QLM 아젠다 수집</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background: #F7F4EE;
+    color: #1F1D1A;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  :root {
+    --bg: #F7F4EE;
+    --surface: #FFFFFF;
+    --surface-2: #F1EDE5;
+    --text-primary: #1F1D1A;
+    --text-secondary: #6B6862;
+    --text-tertiary: #A39E96;
+    --border: rgba(31, 29, 26, 0.08);
+    --border-strong: rgba(31, 29, 26, 0.18);
+    --accent: #2C5F5D;
+    --accent-bg: #E8F0EF;
+    --accent-text: #1A3D3C;
+    --danger: #B8413A;
+    --danger-bg: #F9E8E7;
+    --warning: #A66E0C;
+    --warning-bg: #F9EFD9;
+    --warning-border: #E8D2A0;
+    --success: #2C6E51;
+    --success-bg: #E2F0E9;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  /* ===== Common ===== */
+  .view { display: none; }
+  .view.active { display: block; }
+  .btn { padding: 10px 18px; border-radius: var(--radius-md); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+  .btn-primary:hover { background: #000; }
+  .btn-outline { background: var(--surface); border-color: var(--border-strong); color: var(--text-primary); }
+  .btn-outline:hover { background: var(--surface-2); }
+  .btn-danger { background: var(--surface); border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger-bg); }
+  .btn-warning { background: var(--warning); color: #FFFFFF; border-color: var(--warning); }
+  .btn-warning:hover { background: #8E5A0A; }
+
+  /* ===== Login Modal ===== */
+  .login-overlay { position: fixed; inset: 0; background: rgba(31, 29, 26, 0.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
+  .login-overlay.show { display: flex; }
+  .login-modal { background: var(--surface); border-radius: var(--radius-lg); padding: 36px 32px 28px; max-width: 380px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.18); }
+  .login-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+  .login-modal h2 { font-size: 20px; font-weight: 600; margin: 0 0 6px; text-align: center; letter-spacing: -0.01em; }
+  .login-modal p { font-size: 14px; color: var(--text-secondary); margin: 0 0 24px; text-align: center; }
+  .login-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); font-size: 16px; font-family: inherit; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+  .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44, 95, 93, 0.12); }
+  .login-input.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(184, 65, 58, 0.12); }
+  .login-error { font-size: 13px; color: var(--danger); margin-top: 8px; min-height: 18px; }
+  .login-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .login-actions .btn { flex: 1; justify-content: center; padding: 12px; }
+
+  /* ===== Status Banner ===== */
+  .status-banner { padding: 12px 18px; font-size: 14px; text-align: center; border-bottom: 1px solid var(--border); display: none; }
+  .status-banner.show { display: block; }
+  .status-banner.error { background: var(--danger-bg); color: var(--danger); }
+  .status-banner.warning { background: var(--warning-bg); color: #6B4505; }
+
+  /* ===== Preview Banner (관리자가 공개 폼 미리보기 시) ===== */
+  .preview-banner { display: none; padding: 12px 20px; background: var(--text-primary); color: #FFFFFF; align-items: center; justify-content: center; gap: 14px; font-size: 14px; flex-wrap: wrap; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .preview-banner.show { display: flex; }
+  .preview-banner .preview-icon { display: inline-flex; align-items: center; gap: 6px; opacity: 0.9; }
+  .preview-banner .preview-text { font-weight: 500; }
+  .preview-banner .preview-sub { color: rgba(255,255,255,0.6); font-size: 13px; }
+  .preview-back-btn { padding: 7px 14px; background: rgba(255,255,255,0.16); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: background 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .preview-back-btn:hover { background: rgba(255,255,255,0.26); }
+
+  /* ===== Public View ===== */
+  .page { max-width: 720px; margin: 0 auto; padding: 48px 24px 40px; }
+  .hero { padding: 8px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; letter-spacing: 0.04em; color: var(--accent); padding: 6px 12px; background: var(--accent-bg); border-radius: 999px; margin-bottom: 16px; }
+  .hero h1 { font-size: 28px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.02em; line-height: 1.35; }
+  .hero p { font-size: 16px; line-height: 1.7; color: var(--text-secondary); margin: 0; max-width: 580px; }
+
+  .countdown { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 24px; }
+  .countdown-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .countdown-icon { width: 38px; height: 38px; border-radius: 50%; background: #FCE5E3; color: #B8413A; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(184, 65, 58, 0.06); }
+  .countdown-label { font-size: 15px; color: #B8413A; font-weight: 600; letter-spacing: -0.005em; }
+  .countdown-deadline { font-size: 14px; color: var(--text-tertiary); margin-top: 2px; }
+  .countdown-units { display: flex; gap: 8px; margin-left: auto; }
+  .cu { display: flex; flex-direction: column; align-items: center; min-width: 52px; padding: 8px 10px; background: var(--surface-2); border-radius: var(--radius-md); }
+  .cu-num { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; letter-spacing: -0.02em; }
+  .cu-unit { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; letter-spacing: 0.04em; }
+  .countdown.warning { background: var(--warning-bg); border-color: var(--warning-border); }
+  .countdown.warning .cu { background: rgba(255,255,255,0.6); }
+  .countdown.warning .cu-num { color: var(--warning); }
+  .countdown.danger { background: var(--danger-bg); border-color: rgba(184, 65, 58, 0.25); }
+  .countdown.danger .countdown-icon { background: #F5C9C5; color: #8B2F2A; box-shadow: 0 0 0 4px rgba(139, 47, 42, 0.12); animation: pulse-red 1.6s ease-in-out infinite; }
+  .countdown.danger .countdown-label { color: #8B2F2A; font-weight: 700; }
+  .countdown.danger .cu { background: rgba(255,255,255,0.7); }
+  .countdown.danger .cu-num { color: var(--danger); }
+  .countdown.expired { background: var(--surface-2); border-color: var(--border); }
+  .countdown.expired .countdown-icon { background: rgba(0,0,0,0.05); color: var(--text-tertiary); box-shadow: none; animation: none; }
+  .countdown.expired .countdown-label { color: var(--text-tertiary); font-weight: 500; }
+  .countdown.expired .cu-num { color: var(--text-tertiary); }
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(139, 47, 42, 0.12); }
+    50% { box-shadow: 0 0 0 8px rgba(139, 47, 42, 0.05); }
+  }
+
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 20px; }
+  .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .section-num { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+  .section h2 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .section-sub { font-size: 15px; line-height: 1.6; color: var(--text-tertiary); margin: 0 0 24px 40px; }
+
+  .field { margin-bottom: 22px; }
+  .field:last-child { margin-bottom: 0; }
+  .label { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 500; margin-bottom: 10px; }
+  .req { color: var(--danger); font-size: 15px; font-weight: 600; }
+  .hint { font-size: 14px; color: var(--text-tertiary); margin: 6px 0 0; line-height: 1.5; }
+  .input, .textarea {
+    width: 100%; font-family: inherit; font-size: 16px; color: var(--text-primary);
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+    padding: 12px 14px; transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+  }
+  .input:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44, 95, 93, 0.12); }
+  .input:disabled { background: var(--surface-2); color: var(--text-tertiary); cursor: not-allowed; }
+  .textarea { min-height: 96px; resize: vertical; line-height: 1.65; }
+  .textarea.lg { min-height: 124px; }
+  .error-mark { border-color: var(--danger) !important; }
+
+  .anon-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface-2); border-radius: var(--radius-md); margin-top: 12px; cursor: pointer; user-select: none; transition: background 0.15s; }
+  .anon-row:hover { background: #E8E3D9; }
+  .anon-check { width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--accent); }
+  .anon-label { font-size: 15px; font-weight: 500; }
+  .anon-desc { font-size: 14px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .radio-group { display: flex; flex-direction: column; gap: 10px; }
+  .radio-card { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); cursor: pointer; transition: all 0.15s; background: var(--surface); }
+  .radio-card:hover { border-color: var(--accent); background: #FBFAF7; }
+  .radio-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .radio-card input { margin: 4px 0 0; flex-shrink: 0; accent-color: var(--accent); width: 16px; height: 16px; }
+  .radio-body { flex: 1; }
+  .radio-title { font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .radio-desc { font-size: 14px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+  .badge { font-size: 13px; padding: 3px 10px; border-radius: 999px; font-weight: 500; letter-spacing: 0.02em; }
+  .badge.urgent { background: var(--danger-bg); color: var(--danger); }
+  .badge.normal { background: var(--success-bg); color: var(--success); }
+
+  .confirmed-card { background: var(--surface-2); border-radius: var(--radius-md); padding: 20px 22px; margin-bottom: 16px; }
+  .confirmed-card:last-of-type { margin-bottom: 0; }
+  .confirmed-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .confirmed-tag { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--accent); color: #FFFFFF; font-weight: 500; letter-spacing: 0.02em; }
+  .confirmed-title { font-size: 17px; font-weight: 600; }
+  .confirmed-desc { font-size: 15px; line-height: 1.65; color: var(--text-secondary); margin: 0 0 14px; white-space: pre-wrap; }
+  .confirmed-desc:empty { display: none; }
+
+  /* Multi-agenda cards in Section 2 */
+  .agenda-item { background: var(--surface-2); border-radius: var(--radius-md); padding: 22px 24px; margin-bottom: 14px; position: relative; transition: box-shadow 0.2s; }
+  .agenda-item:last-of-type { margin-bottom: 14px; }
+  .agenda-item-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .agenda-item-num { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 0.02em; }
+  .agenda-item-num::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  .agenda-remove { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .agenda-remove:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+  .agenda-remove:disabled { opacity: 0.3; cursor: not-allowed; }
+  .agenda-add-btn { width: 100%; padding: 14px; border: 1px dashed var(--border-strong); background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+  .agenda-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+  .agenda-count-meta { font-size: 13px; color: var(--text-tertiary); margin: 0 0 14px; padding: 0 4px; }
+
+  .alert { padding: 14px 16px; background: var(--danger-bg); border: 1px solid rgba(184, 65, 58, 0.25); border-radius: var(--radius-md); color: var(--danger); font-size: 15px; margin: 16px 0; display: none; align-items: center; gap: 10px; }
+  .alert.show { display: flex; }
+
+  .confirm-strip { display: none; align-items: flex-start; gap: 14px; padding: 18px 20px; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius-md); margin: 16px 0; }
+  .confirm-strip.show { display: flex; }
+  .confirm-icon { color: var(--warning); flex-shrink: 0; margin-top: 2px; }
+  .confirm-body { flex: 1; }
+  .confirm-title { font-size: 15px; font-weight: 600; color: #6B4505; margin-bottom: 4px; }
+  .confirm-text { font-size: 15px; color: #6B4505; line-height: 1.6; }
+  .confirm-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+  .form-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 0 8px; flex-wrap: wrap; }
+  .meta { font-size: 14px; color: var(--text-tertiary); display: flex; align-items: center; gap: 8px; }
+  .submit { padding: 14px 32px; background: var(--text-primary); color: var(--surface); border: none; border-radius: var(--radius-md); font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; letter-spacing: 0.01em; }
+  .submit:hover { background: #000; transform: translateY(-1px); }
+  .submit:active { transform: translateY(0); }
+  .submit:disabled { background: var(--surface-2); color: var(--text-tertiary); cursor: not-allowed; transform: none; }
+
+  .success { padding: 40px 28px; background: var(--success-bg); border-radius: var(--radius-lg); text-align: center; display: none; }
+  .success.show { display: block; }
+  .success-icon { width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; background: var(--success); color: #FFFFFF; display: flex; align-items: center; justify-content: center; }
+  .success h3 { font-size: 22px; font-weight: 600; margin: 0 0 8px; color: #1A4733; letter-spacing: -0.01em; }
+  .success p { font-size: 15px; color: #2C6E51; margin: 0 0 16px; line-height: 1.65; }
+  .success-count { display: inline-block; font-size: 13px; padding: 4px 12px; background: rgba(44, 110, 81, 0.15); color: #1A4733; border-radius: 999px; font-weight: 500; }
+  .success-actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+  .btn-another { padding: 11px 22px; background: var(--surface); color: var(--success); border: 1px solid var(--success); border-radius: var(--radius-md); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .btn-another:hover { background: rgba(44, 110, 81, 0.06); }
+
+  .page-foot { text-align: center; margin-top: 48px; padding: 20px 0; border-top: 1px solid var(--border); }
+  .admin-entry { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); text-decoration: none; padding: 8px 16px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 999px; transition: all 0.15s; font-weight: 500; }
+  .admin-entry:hover { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+  .admin-entry svg { width: 13px; height: 13px; }
+
+  /* ===== Admin View ===== */
+  .topbar { background: var(--text-primary); color: var(--surface); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-logo { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .topbar-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .topbar-tag { font-size: 13px; padding: 3px 10px; background: rgba(255,255,255,0.12); border-radius: 999px; color: rgba(255,255,255,0.85); font-weight: 500; letter-spacing: 0.02em; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .save-indicator { font-size: 14px; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 6px; }
+  .save-indicator.saving { color: #F2D89E; }
+  .save-indicator.saved { color: #B8E1C8; }
+  .save-indicator.error { color: #F2A8A8; }
+  .top-btn { font-size: 14px; color: rgba(255,255,255,0.85); text-decoration: none; padding: 8px 14px; background: rgba(255,255,255,0.08); border-radius: 8px; transition: background 0.15s; border: none; cursor: pointer; font-family: inherit; }
+  .top-btn:hover { background: rgba(255,255,255,0.16); }
+
+  .admin-page { max-width: 920px; margin: 0 auto; padding: 32px 24px 80px; }
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 26px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .page-header p { font-size: 15px; color: var(--text-secondary); margin: 0; line-height: 1.65; }
+
+  .tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: var(--radius-md); margin-bottom: 24px; width: fit-content; max-width: 100%; overflow-x: auto; }
+  .tab { padding: 10px 18px; border-radius: 7px; font-size: 15px; font-weight: 500; cursor: pointer; color: var(--text-secondary); border: none; background: transparent; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+  .tab.active { background: var(--surface); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px 28px; margin-bottom: 18px; }
+  .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .card-tag { font-size: 13px; padding: 3px 10px; background: var(--accent-bg); color: var(--accent); border-radius: 999px; font-weight: 500; }
+  .card h2 { font-size: 19px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .card-sub { font-size: 14px; color: var(--text-tertiary); margin: 0 0 22px; line-height: 1.6; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .admin-field { margin-bottom: 16px; }
+  .admin-field:last-child { margin-bottom: 0; }
+  .admin-label { display: block; font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.01em; }
+  .admin-input, .admin-textarea, .datetime {
+    width: 100%; font-family: inherit; font-size: 15px; color: var(--text-primary);
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px;
+    padding: 10px 12px; transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+  }
+  .admin-input:focus, .admin-textarea:focus, .datetime:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44, 95, 93, 0.12); }
+  .admin-textarea { min-height: 76px; resize: vertical; line-height: 1.6; }
+  .admin-textarea.lg { min-height: 100px; }
+
+  .item-card { background: var(--surface-2); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 14px; position: relative; }
+  .item-card:last-of-type { margin-bottom: 0; }
+  .item-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+  .item-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.02em; text-transform: uppercase; }
+  .item-actions { display: flex; gap: 6px; }
+  .icon-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .icon-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .add-btn { width: 100%; padding: 12px; border: 1px dashed var(--border-strong); background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; }
+  .stat-label { font-size: 13px; color: var(--text-tertiary); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stat-value .unit { font-size: 16px; color: var(--text-tertiary); margin-left: 4px; font-weight: 500; letter-spacing: 0; }
+
+  .actions-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .submission-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .sub-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); font-size: 15px; }
+  .sub-row { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .sub-row:last-child { border-bottom: none; }
+  .sub-header-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .sub-writer { font-size: 15px; font-weight: 600; }
+  .sub-writer.anon { color: var(--text-tertiary); font-style: italic; }
+  .sub-time { font-size: 13px; color: var(--text-tertiary); }
+  .sub-urgency { font-size: 12px; padding: 2px 9px; border-radius: 999px; font-weight: 500; letter-spacing: 0.02em; }
+  .sub-urgency.urgent { background: var(--danger-bg); color: var(--danger); }
+  .sub-urgency.normal { background: var(--success-bg); color: var(--success); }
+  .sub-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+  .sub-content { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap; }
+  .sub-meta { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text-tertiary); margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--border-strong); }
+  .sub-meta-label { font-weight: 500; color: var(--text-secondary); }
+
+  .danger-zone { background: var(--danger-bg); border: 1px solid rgba(184, 65, 58, 0.2); border-radius: var(--radius-md); padding: 18px 20px; }
+  .danger-zone-title { font-size: 14px; font-weight: 600; color: var(--danger); margin-bottom: 6px; }
+  .danger-zone-desc { font-size: 13px; color: #8B2F2A; margin-bottom: 12px; line-height: 1.5; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 18px; background: var(--text-primary); color: var(--surface); border-radius: var(--radius-md); font-size: 14px; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.25s; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 999; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 16px 40px; }
+    .hero h1 { font-size: 24px; }
+    .section { padding: 22px 20px; }
+    .section-sub { margin-left: 0; }
+    .countdown { flex-direction: column; align-items: stretch; gap: 14px; }
+    .countdown-units { margin-left: 0; justify-content: space-between; }
+    .cu { flex: 1; min-width: 0; }
+    .form-footer { flex-direction: column-reverse; align-items: stretch; gap: 12px; }
+    .submit { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Login Modal ===== -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-modal">
+    <div class="login-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <h2>관리자 로그인</h2>
+    <p>비밀번호를 입력해 주세요</p>
+    <input type="password" class="login-input" id="login-input" placeholder="비밀번호" autocomplete="off" />
+    <div class="login-error" id="login-error"></div>
+    <div class="login-actions">
+      <button type="button" class="btn btn-outline" id="login-cancel">취소</button>
+      <button type="button" class="btn btn-primary" id="login-submit">로그인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Status Banner ===== -->
+<div class="status-banner" id="status-banner"></div>
+
+<!-- ===== Public View ===== -->
+<div class="view active" id="public-view">
+  <div class="preview-banner" id="preview-banner">
+    <span class="preview-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span class="preview-text">관리자 미리보기 모드</span>
+    </span>
+    <span class="preview-sub">일반 사용자에게는 이 배너가 보이지 않습니다</span>
+    <button type="button" class="preview-back-btn" id="exit-preview-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      관리자 패널로 돌아가기
+    </button>
+  </div>
+  <div class="page">
+    <header class="hero">
+      <div class="eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span id="hero-eyebrow">QLM · 분기별 경영전략회의</span>
+      </div>
+      <h1 id="hero-title">더 나은 분기를 위한 QLM 아젠다를 들려주세요</h1>
+      <p id="hero-desc">여러분의 생생한 의견이 회의의 방향을 만듭니다.</p>
+    </header>
+
+    <div class="countdown" id="countdown">
+      <div class="countdown-left">
+        <div class="countdown-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <div>
+          <div class="countdown-label" id="cd-label">제출 마감까지</div>
+          <div class="countdown-deadline" id="cd-deadline">—</div>
+        </div>
+      </div>
+      <div class="countdown-units">
+        <div class="cu"><div class="cu-num" id="cd-d">00</div><div class="cu-unit">DAYS</div></div>
+        <div class="cu"><div class="cu-num" id="cd-h">00</div><div class="cu-unit">HOURS</div></div>
+        <div class="cu"><div class="cu-num" id="cd-m">00</div><div class="cu-unit">MIN</div></div>
+        <div class="cu"><div class="cu-num" id="cd-s">00</div><div class="cu-unit">SEC</div></div>
+      </div>
+    </div>
+
+    <div id="form-wrapper">
+      <section class="section">
+        <div class="section-head">
+          <span class="section-num">1</span>
+          <h2 id="sec1-heading">작성자 정보</h2>
+        </div>
+        <div class="field">
+          <label class="label" for="writer_name"><span id="name-label">이름</span></label>
+          <input type="text" id="writer_name" class="input" />
+          <label class="anon-row" for="is_anonymous">
+            <input type="checkbox" id="is_anonymous" class="anon-check" />
+            <div>
+              <div class="anon-label" id="anon-label">익명으로 제출하기</div>
+              <div class="anon-desc" id="anon-desc">체크 시 작성자 정보는 저장되지 않습니다.</div>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <span class="section-num">2</span>
+          <h2 id="sec2-heading">신규 아젠다 제안</h2>
+        </div>
+        <p class="section-sub" id="sec2-sub"></p>
+        <p class="agenda-count-meta" id="agenda-count-meta">최소 1개는 작성해야 하며, 원하시면 여러 개를 한 번에 제출하실 수 있습니다.</p>
+        <div id="agenda-list"></div>
+        <button type="button" class="agenda-add-btn" id="add-agenda-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          아젠다 추가하기
+        </button>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <span class="section-num">3</span>
+          <h2 id="sec3-heading">확정 아젠다에 대한 의견</h2>
+        </div>
+        <p class="section-sub" id="sec3-sub"></p>
+        <div id="confirmed-list"></div>
+      </section>
+
+      <div class="alert" id="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span id="alert-msg"></span>
+      </div>
+
+      <div class="confirm-strip" id="confirm-strip">
+        <svg class="confirm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14a2 2 0 001.71 3h16.36a2 2 0 001.71-3l-8.18-14a2 2 0 00-3.42 0z"/></svg>
+        <div class="confirm-body">
+          <div class="confirm-title">제출 후에는 수정·삭제가 불가능합니다.</div>
+          <div class="confirm-text">작성하신 내용을 다시 한 번 확인하셨다면 아래 '제출 확정'을 눌러주세요. 추가로 의견이 생기면 마감 전까지 새 글로 제출하실 수 있습니다.</div>
+          <div class="confirm-actions">
+            <button type="button" class="btn btn-outline" id="cancel-btn">취소하고 다시 검토</button>
+            <button type="button" class="btn btn-warning" id="final-btn">제출 확정</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <span class="meta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          익명 제출 시 작성자 정보는 저장되지 않습니다.
+        </span>
+        <button type="button" class="submit" id="submit-btn">제출하기</button>
+      </div>
+    </div>
+
+    <div class="success" id="success">
+      <div class="success-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      </div>
+      <h3>아젠다가 제출되었습니다</h3>
+      <p>소중한 의견 감사합니다. 제출된 내용은 수정할 수 없으며, QLM 준비에 잘 반영하겠습니다.<br>추가로 제출하고 싶은 아젠다가 있다면 아래 버튼을 눌러주세요.</p>
+      <div class="success-count" id="success-count">1번째 제출 완료</div>
+      <div class="success-actions">
+        <button type="button" class="btn-another" id="another-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M12 5v14M5 12h14"/></svg>
+          다른 아젠다도 제출하기
+        </button>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <a href="#admin" id="admin-link" class="admin-entry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        관리자 로그인
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Admin View ===== -->
+<div class="view" id="admin-view">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <span class="topbar-title">QLM 아젠다</span>
+      <span class="topbar-tag">관리자</span>
+    </div>
+    <div class="topbar-right">
+      <span class="save-indicator" id="save-indicator">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+        <span id="save-text">동기화됨</span>
+      </span>
+      <button type="button" class="top-btn" id="preview-btn">↗ 공개 페이지 미리보기</button>
+      <button type="button" class="top-btn" id="logout-btn">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="admin-page">
+    <header class="page-header">
+      <h1>아젠다 수집 페이지 관리</h1>
+      <p>수정한 내용은 Firebase에 자동 저장되며, 모든 접속자에게 실시간 반영됩니다.</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="content">콘텐츠 편집</button>
+      <button class="tab" data-tab="submissions">제출 목록 <span id="submission-badge" style="margin-left:4px; color:var(--text-tertiary);">0</span></button>
+      <button class="tab" data-tab="danger">데이터 관리</button>
+    </div>
+
+    <!-- Tab: Content -->
+    <div class="panel active" id="panel-content">
+      <div class="card">
+        <div class="card-head"><span class="card-tag">마감일</span><h2>제출 마감 일시</h2></div>
+        <p class="card-sub">설정한 시각이 지나면 공개 페이지의 제출 버튼이 자동으로 비활성화됩니다.</p>
+        <div class="admin-field">
+          <label class="admin-label">마감 일시 (한국시간 기준)</label>
+          <input type="datetime-local" class="datetime" id="cfg-deadline" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-tag">헤더</span><h2>페이지 인트로</h2></div>
+        <div class="admin-field"><label class="admin-label">상단 카테고리 (Eyebrow)</label><input type="text" class="admin-input" id="cfg-hero-eyebrow" /></div>
+        <div class="admin-field"><label class="admin-label">메인 제목</label><input type="text" class="admin-input" id="cfg-hero-title" /></div>
+        <div class="admin-field"><label class="admin-label">소개 문구</label><textarea class="admin-textarea" id="cfg-hero-desc"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-tag">Section 1</span><h2>작성자 정보 섹션</h2></div>
+        <div class="admin-field"><label class="admin-label">섹션 제목</label><input type="text" class="admin-input" id="cfg-sec1-heading" /></div>
+        <div class="grid-2">
+          <div class="admin-field"><label class="admin-label">이름 필드 라벨</label><input type="text" class="admin-input" id="cfg-sec1-nameLabel" /></div>
+          <div class="admin-field"><label class="admin-label">이름 필드 placeholder</label><input type="text" class="admin-input" id="cfg-sec1-namePlaceholder" /></div>
+        </div>
+        <div class="admin-field"><label class="admin-label">익명 토글 텍스트</label><input type="text" class="admin-input" id="cfg-sec1-anonLabel" /></div>
+        <div class="admin-field"><label class="admin-label">익명 토글 설명</label><input type="text" class="admin-input" id="cfg-sec1-anonDesc" /></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-tag">Section 2</span><h2>신규 아젠다 제안 섹션</h2></div>
+        <div class="admin-field"><label class="admin-label">섹션 제목</label><input type="text" class="admin-input" id="cfg-sec2-heading" /></div>
+        <div class="admin-field"><label class="admin-label">섹션 안내 문구</label><textarea class="admin-textarea" id="cfg-sec2-sub"></textarea></div>
+
+        <div class="item-card">
+          <div class="item-title">아이디어 제목 필드</div>
+          <div class="grid-2">
+            <div class="admin-field"><label class="admin-label">라벨</label><input type="text" class="admin-input" id="cfg-sec2-titleLabel" /></div>
+            <div class="admin-field"><label class="admin-label">placeholder</label><input type="text" class="admin-input" id="cfg-sec2-titlePlaceholder" /></div>
+          </div>
+        </div>
+
+        <div class="item-card">
+          <div class="item-title">아이디어 내용 필드</div>
+          <div class="grid-2">
+            <div class="admin-field"><label class="admin-label">라벨</label><input type="text" class="admin-input" id="cfg-sec2-contentLabel" /></div>
+            <div class="admin-field"><label class="admin-label">placeholder</label><input type="text" class="admin-input" id="cfg-sec2-contentPlaceholder" /></div>
+          </div>
+        </div>
+
+        <div class="item-card">
+          <div class="item-title">논의 필요 이유 필드</div>
+          <div class="grid-2">
+            <div class="admin-field"><label class="admin-label">라벨</label><input type="text" class="admin-input" id="cfg-sec2-reasonLabel" /></div>
+            <div class="admin-field"><label class="admin-label">placeholder</label><input type="text" class="admin-input" id="cfg-sec2-reasonPlaceholder" /></div>
+          </div>
+          <div class="admin-field"><label class="admin-label">힌트 문구</label><input type="text" class="admin-input" id="cfg-sec2-reasonHint" /></div>
+        </div>
+
+        <div class="item-card">
+          <div class="item-title">시급성 선택 필드</div>
+          <div class="admin-field"><label class="admin-label">필드 라벨</label><input type="text" class="admin-input" id="cfg-sec2-urgencyLabel" /></div>
+          <div class="grid-2">
+            <div class="admin-field"><label class="admin-label">Urgent 옵션 — 제목</label><input type="text" class="admin-input" id="cfg-sec2-urgentTitle" /></div>
+            <div class="admin-field"><label class="admin-label">Urgent 옵션 — 설명</label><input type="text" class="admin-input" id="cfg-sec2-urgentDesc" /></div>
+            <div class="admin-field"><label class="admin-label">Normal 옵션 — 제목</label><input type="text" class="admin-input" id="cfg-sec2-normalTitle" /></div>
+            <div class="admin-field"><label class="admin-label">Normal 옵션 — 설명</label><input type="text" class="admin-input" id="cfg-sec2-normalDesc" /></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-tag">Section 3</span><h2>확정 아젠다 피드백 섹션</h2></div>
+        <div class="admin-field"><label class="admin-label">섹션 제목</label><input type="text" class="admin-input" id="cfg-sec3-heading" /></div>
+        <div class="admin-field"><label class="admin-label">섹션 안내 문구</label><textarea class="admin-textarea" id="cfg-sec3-sub"></textarea></div>
+        <div id="confirmed-items"></div>
+        <button type="button" class="add-btn" id="add-confirmed-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          확정 아젠다 추가
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab: Submissions -->
+    <div class="panel" id="panel-submissions">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">총 제출 건수</div><div class="stat-value"><span id="stat-total">0</span><span class="unit">건</span></div></div>
+        <div class="stat"><div class="stat-label">Urgent 분류</div><div class="stat-value"><span id="stat-urgent">0</span><span class="unit">건</span></div></div>
+        <div class="stat"><div class="stat-label">익명 제출</div><div class="stat-value"><span id="stat-anon">0</span><span class="unit">건</span></div></div>
+      </div>
+      <div class="actions-row">
+        <button type="button" class="btn btn-primary" id="export-csv-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          CSV로 내보내기
+        </button>
+      </div>
+      <div class="submission-list" id="submission-list">
+        <div class="sub-empty">아직 제출된 아젠다가 없습니다.</div>
+      </div>
+    </div>
+
+    <!-- Tab: Danger -->
+    <div class="panel" id="panel-danger">
+      <div class="card">
+        <div class="card-head"><h2>설정 초기화</h2></div>
+        <p class="card-sub">모든 페이지 텍스트와 마감일을 기본값으로 되돌립니다. 제출된 데이터는 영향을 받지 않습니다.</p>
+        <div class="danger-zone">
+          <div class="danger-zone-title">콘텐츠 설정 초기화</div>
+          <div class="danger-zone-desc">아젠다, 마감일, 안내 문구가 모두 기본값으로 돌아갑니다.</div>
+          <button type="button" class="btn btn-danger" id="reset-config-btn">설정 초기화</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>제출 데이터 삭제</h2></div>
+        <p class="card-sub">제출된 모든 아젠다를 Firebase에서 삭제합니다. CSV로 먼저 백업하신 후 진행하시는 것을 권장합니다.</p>
+        <div class="danger-zone">
+          <div class="danger-zone-title">전체 제출 삭제</div>
+          <div class="danger-zone-desc">한 번 삭제하면 복구할 수 없습니다. 정말 진행하시려면 아래 버튼을 두 번 누르세요.</div>
+          <button type="button" class="btn btn-danger" id="clear-submissions-btn">전체 제출 삭제</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">저장되었습니다</div>
+
+<script type="module">
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  ① Firebase 설정 — 본인 프로젝트 값으로 교체해 주세요          ║
+// ║  Firebase Console → 프로젝트 설정 → 일반 → 내 앱 → SDK 구성    ║
+// ╚════════════════════════════════════════════════════════════════╝
+const firebaseConfig = {
+  apiKey: "AIzaSyCibQIThgq9k6iQOUa2hNZ5zl94ZChf150",
+  authDomain: "qlm-609fc.firebaseapp.com",
+  databaseURL: "https://qlm-609fc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "qlm-609fc",
+  storageBucket: "qlm-609fc.firebasestorage.app",
+  messagingSenderId: "931878092255",
+  appId: "1:931878092255:web:6793bad4af882dfd3b586a"
+};
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  ② 관리자 비밀번호                                              ║
+// ╚════════════════════════════════════════════════════════════════╝
+const ADMIN_PASSWORD = "admin0803";
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  ③ Firestore 경로                                               ║
+// ╚════════════════════════════════════════════════════════════════╝
+const CONFIG_DOC_PATH = ["qlm_meta", "config"];
+const SUBMISSIONS_PATH = "qlm_submissions";
+
+// ─────────── Firebase imports ───────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, onSnapshot,
+  addDoc, collection, query, orderBy, getDocs,
+  deleteDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+// ─────────── 기본 설정 ───────────
+const DEFAULT_CONFIG = {
+  hero: {
+    eyebrow: "QLM · 분기별 경영전략회의",
+    title: "더 나은 분기를 위한 QLM 아젠다를 들려주세요",
+    description: "여러분의 생생한 의견이 회의의 방향을 만듭니다. 자유롭게, 그리고 솔직하게 작성해 주세요. 익명으로도 제출하실 수 있고, 여러 건을 나눠서 제출하셔도 좋아요."
+  },
+  deadline: "2026-05-29T18:00",
+  sec1: {
+    heading: "작성자 정보",
+    nameLabel: "이름",
+    namePlaceholder: "홍길동",
+    anonLabel: "익명으로 제출하기",
+    anonDesc: "체크 시 작성자 정보는 저장되지 않습니다."
+  },
+  sec2: {
+    heading: "신규 아젠다 제안",
+    sub: "이번 분기 QLM에서 다뤘으면 하는 새로운 주제를 제안해 주세요. 비슷한 주제라도 따로따로 제출하셔도 좋아요 — 취합 후 그루핑됩니다.",
+    titleLabel: "아이디어 제목",
+    titlePlaceholder: "예) 신규 서비스 출시 일정 재조율",
+    contentLabel: "아이디어 내용",
+    contentPlaceholder: "현재 상황과 제안 배경, 기대 효과 등을 자유롭게 작성해 주세요.",
+    reasonLabel: "논의 필요 이유",
+    reasonPlaceholder: "왜 이 내용이 QLM에서 논의되어야 하는지 구체적으로 적어주세요.",
+    reasonHint: "한 줄이라도 좋아요. 시급한 이유, 관련 부서, 예상되는 영향 등이 도움이 됩니다.",
+    urgencyLabel: "이번 분기 논의 시급성",
+    urgentTitle: "반드시 이번 분기에 논의되어야 함",
+    urgentDesc: "미루면 사업 진행이나 의사결정에 차질이 생기는 사안",
+    normalTitle: "이번 분기가 아니어도 괜찮지만 논의가 필요함",
+    normalDesc: "중장기적으로 다뤄야 할 주제이지만 시점은 유연한 사안"
+  },
+  sec3: {
+    heading: "확정 아젠다에 대한 의견",
+    sub: "이미 확정된 아젠다입니다. \"이건 꼭 짚고 가야 한다\" 싶은 포인트를 알려주세요.",
+    items: [
+      {
+        tag: "확정 1",
+        title: "클린허브 오픈 / 운영 이슈 회고",
+        description: "5월에 오픈한 클린허브의 운영 두 달 차 시점입니다. 초기 가설과 실제 운영 사이의 갭을 정리하고, 잘된 점·보완할 점을 모두 회고할 예정입니다.",
+        placeholder: "오픈 과정에서 보였던 이슈, 운영하며 느낀 페인포인트, 회고에서 꼭 다뤘으면 하는 주제 등을 자유롭게 적어주세요."
+      },
+      {
+        tag: "확정 2",
+        title: "2학기 교육청 사업 대비 전략",
+        description: "8월부터 본격화되는 2학기 교육청 사업의 대비 전략을 점검합니다. 인력, 예산, 일정 측면에서 사전에 결정되어야 할 사항을 정리합니다.",
+        placeholder: "우려되는 지점, 준비가 필요한 리소스, 사전에 정리되어야 할 의사결정 사항 등을 적어주세요."
+      }
+    ]
+  }
+};
+
+// ─────────── 유틸 ───────────
+const $ = id => document.getElementById(id);
+const escapeHtml = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(Math.max(0, Math.floor(n))).padStart(2,'0');
+
+function deepMerge(base, override) {
+  const result = JSON.parse(JSON.stringify(base));
+  if (!override) return result;
+  Object.keys(override).forEach(k => {
+    if (Array.isArray(override[k])) {
+      // 배열은 통째로 교체하되, 각 아이템이 객체면 base의 동일 인덱스 아이템과 병합
+      const baseArr = Array.isArray(result[k]) ? result[k] : [];
+      result[k] = override[k].map((item, i) => {
+        if (item && typeof item === 'object' && baseArr[i] && typeof baseArr[i] === 'object') {
+          return deepMerge(baseArr[i], item);
+        }
+        return item;
+      });
+    } else if (override[k] && typeof override[k] === 'object') {
+      result[k] = deepMerge(result[k] || {}, override[k]);
+    } else {
+      result[k] = override[k];
+    }
+  });
+  return result;
+}
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function showStatusBanner(type, msg) {
+  const b = $('status-banner');
+  b.className = 'status-banner show ' + type;
+  b.textContent = msg;
+}
+
+// ─────────── Firebase 초기화 ───────────
+let app, db, firebaseReady = false;
+
+try {
+  if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+    showStatusBanner('warning', '⚠ Firebase 설정이 필요합니다 — 코드 상단의 firebaseConfig를 본인 프로젝트 값으로 교체해 주세요.');
+  } else {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    firebaseReady = true;
+  }
+} catch (e) {
+  showStatusBanner('error', 'Firebase 초기화 실패: ' + e.message);
+}
+
+// ─────────── 상태 ───────────
+let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+let submissions = [];
+let submissionCount = 0;
+let isExpired = false;
+let saveDebounce = null;
+let configUnsub = null;
+let submissionsUnsub = null;
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  공개 폼 렌더링                                                 ║
+// ╚════════════════════════════════════════════════════════════════╝
+function renderPublicForm() {
+  $('hero-eyebrow').textContent = config.hero.eyebrow;
+  $('hero-title').textContent = config.hero.title;
+  $('hero-desc').textContent = config.hero.description;
+
+  $('sec1-heading').textContent = config.sec1.heading;
+  $('name-label').textContent = config.sec1.nameLabel;
+  $('writer_name').placeholder = config.sec1.namePlaceholder;
+  $('anon-label').textContent = config.sec1.anonLabel;
+  $('anon-desc').textContent = config.sec1.anonDesc;
+
+  $('sec2-heading').textContent = config.sec2.heading;
+  $('sec2-sub').textContent = config.sec2.sub;
+  // 아젠다 카드 동적 렌더 (각 카드 내부의 라벨/placeholder는 renderAgendaCards가 처리)
+  renderAgendaCards();
+
+  $('sec3-heading').textContent = config.sec3.heading;
+  $('sec3-sub').innerHTML = escapeHtml(config.sec3.sub) + ' <span style="color: var(--text-tertiary);">(선택)</span>';
+
+  const list = $('confirmed-list');
+  list.innerHTML = '';
+  config.sec3.items.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'confirmed-card';
+    card.innerHTML = `
+      <div class="confirmed-head">
+        <span class="confirmed-tag">${escapeHtml(item.tag)}</span>
+        <span class="confirmed-title">${escapeHtml(item.title)}</span>
+      </div>
+      ${item.description ? `<p class="confirmed-desc">${escapeHtml(item.description)}</p>` : ''}
+      <textarea class="textarea confirmed-feedback" data-idx="${idx}" placeholder="${escapeHtml(item.placeholder)}"></textarea>
+    `;
+    list.appendChild(card);
+  });
+
+  updateCountdown();
+}
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  카운트다운                                                     ║
+// ╚════════════════════════════════════════════════════════════════╝
+function formatDeadline(d) {
+  const days = ['일','월','화','수','목','금','토'];
+  const y = d.getFullYear(), mo = d.getMonth()+1, da = d.getDate();
+  const dow = days[d.getDay()];
+  let h = d.getHours(); const min = d.getMinutes();
+  const ampm = h < 12 ? '오전' : '오후';
+  h = h % 12; if (h === 0) h = 12;
+  const minStr = min === 0 ? '' : ':' + String(min).padStart(2,'0');
+  return `${y}년 ${mo}월 ${da}일(${dow}) ${ampm} ${h}${minStr} 마감`;
+}
+
+function updateCountdown() {
+  const deadline = new Date(config.deadline + ':00+09:00');
+  $('cd-deadline').textContent = formatDeadline(deadline);
+  const diff = deadline.getTime() - Date.now();
+  const cdEl = $('countdown'), submitBtn = $('submit-btn');
+
+  if (diff <= 0) {
+    $('cd-d').textContent='00'; $('cd-h').textContent='00'; $('cd-m').textContent='00'; $('cd-s').textContent='00';
+    $('cd-label').textContent = '제출이 마감되었습니다';
+    cdEl.classList.remove('warning','danger'); cdEl.classList.add('expired');
+    if (!isExpired) { isExpired = true; submitBtn.disabled = true; submitBtn.textContent = '제출 마감'; }
+    return;
+  }
+  if (isExpired) { isExpired = false; submitBtn.disabled = false; submitBtn.textContent = '제출하기'; }
+
+  const days = Math.floor(diff/(1000*60*60*24));
+  const hours = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+  const minutes = Math.floor((diff%(1000*60*60))/(1000*60));
+  const seconds = Math.floor((diff%(1000*60))/1000);
+  $('cd-d').textContent = pad(days); $('cd-h').textContent = pad(hours);
+  $('cd-m').textContent = pad(minutes); $('cd-s').textContent = pad(seconds);
+  cdEl.classList.remove('warning','danger','expired');
+  if (diff < 24*60*60*1000) { cdEl.classList.add('danger'); $('cd-label').textContent = '마감 임박 — 24시간 이내'; }
+  else if (diff < 3*24*60*60*1000) { cdEl.classList.add('warning'); $('cd-label').textContent = '제출 마감까지'; }
+  else { $('cd-label').textContent = '제출 마감까지'; }
+}
+setInterval(updateCountdown, 1000);
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  Firestore 구독 (config + submissions)                          ║
+// ╚════════════════════════════════════════════════════════════════╝
+async function subscribeConfig() {
+  if (!firebaseReady) { renderPublicForm(); return; }
+  const ref = doc(db, ...CONFIG_DOC_PATH);
+  configUnsub = onSnapshot(ref, (snap) => {
+    if (snap.exists()) {
+      config = deepMerge(DEFAULT_CONFIG, snap.data());
+    } else {
+      // 문서가 없으면 기본값으로 생성
+      config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      setDoc(ref, config).catch(e => console.error('초기 config 생성 실패:', e));
+    }
+    renderPublicForm();
+    if ($('admin-view').classList.contains('active')) {
+      applyConfigToAdminForm();
+    }
+  }, (err) => {
+    showStatusBanner('error', 'Firestore 연결 실패: ' + err.message);
+    renderPublicForm();
+  });
+}
+
+function subscribeSubmissions() {
+  if (!firebaseReady) return;
+  const q = query(collection(db, SUBMISSIONS_PATH), orderBy('submitted_at', 'desc'));
+  submissionsUnsub = onSnapshot(q, (snap) => {
+    submissions = [];
+    snap.forEach(d => submissions.push({ id: d.id, ...d.data() }));
+    if ($('admin-view').classList.contains('active')) {
+      renderSubmissions();
+    }
+    $('submission-badge').textContent = submissions.length;
+  }, (err) => console.error('제출 구독 실패:', err));
+}
+
+async function saveConfig() {
+  if (!firebaseReady) { showToast('Firebase 미설정 — 저장 불가'); return; }
+  const indicator = $('save-indicator');
+  const saveText = $('save-text');
+  indicator.classList.remove('saved', 'error');
+  indicator.classList.add('saving');
+  saveText.textContent = '저장 중...';
+  try {
+    await setDoc(doc(db, ...CONFIG_DOC_PATH), config);
+    indicator.classList.remove('saving', 'error');
+    indicator.classList.add('saved');
+    saveText.textContent = '동기화됨';
+  } catch (e) {
+    indicator.classList.remove('saving', 'saved');
+    indicator.classList.add('error');
+    saveText.textContent = '저장 실패';
+    console.error(e);
+    showToast('저장 실패: ' + e.message);
+  }
+}
+
+function debouncedSave() {
+  clearTimeout(saveDebounce);
+  $('save-indicator').classList.remove('saved');
+  $('save-text').textContent = '입력 중...';
+  saveDebounce = setTimeout(saveConfig, 500);
+}
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  공개 폼 — 다중 아젠다 상태 관리                                  ║
+// ╚════════════════════════════════════════════════════════════════╝
+function genId() { return 'a' + Math.random().toString(36).slice(2, 9); }
+
+let agendaCards = [{ id: genId(), title: '', content: '', reason: '', urgency: '' }];
+
+function renderAgendaCards() {
+  const list = $('agenda-list');
+  if (!list) return;
+  // 입력 중 포커스 유지: 현재 포커스된 요소의 식별자 저장
+  const ae = document.activeElement;
+  const focusInfo = ae && ae.dataset?.cardId ? { cardId: ae.dataset.cardId, field: ae.dataset.field, selStart: ae.selectionStart, selEnd: ae.selectionEnd } : null;
+
+  list.innerHTML = '';
+  agendaCards.forEach((card, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'agenda-item';
+    wrap.dataset.cardId = card.id;
+    wrap.innerHTML = `
+      <div class="agenda-item-head">
+        <span class="agenda-item-num">아젠다 ${idx + 1}</span>
+        <button type="button" class="agenda-remove" data-action="remove" data-card-id="${card.id}" title="이 아젠다 삭제" ${agendaCards.length <= 1 ? 'disabled' : ''}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="field">
+        <label class="label">${escapeHtml(config.sec2.titleLabel)} <span class="req">*</span></label>
+        <input type="text" class="input agenda-field" data-card-id="${card.id}" data-field="title" placeholder="${escapeHtml(config.sec2.titlePlaceholder)}" />
+      </div>
+      <div class="field">
+        <label class="label">${escapeHtml(config.sec2.contentLabel)} <span class="req">*</span></label>
+        <textarea class="textarea lg agenda-field" data-card-id="${card.id}" data-field="content" placeholder="${escapeHtml(config.sec2.contentPlaceholder)}"></textarea>
+      </div>
+      <div class="field">
+        <label class="label">${escapeHtml(config.sec2.reasonLabel)} <span class="req">*</span></label>
+        <textarea class="textarea agenda-field" data-card-id="${card.id}" data-field="reason" placeholder="${escapeHtml(config.sec2.reasonPlaceholder)}"></textarea>
+        <p class="hint">${escapeHtml(config.sec2.reasonHint)}</p>
+      </div>
+      <div class="field">
+        <label class="label">${escapeHtml(config.sec2.urgencyLabel)} <span class="req">*</span></label>
+        <div class="radio-group">
+          <label class="radio-card ${card.urgency === 'urgent' ? 'selected' : ''}" data-value="urgent">
+            <input type="radio" name="urgent-${card.id}" value="urgent" class="agenda-radio" data-card-id="${card.id}" ${card.urgency === 'urgent' ? 'checked' : ''} />
+            <div class="radio-body">
+              <div class="radio-title">${escapeHtml(config.sec2.urgentTitle)} <span class="badge urgent">Urgent</span></div>
+              <div class="radio-desc">${escapeHtml(config.sec2.urgentDesc)}</div>
+            </div>
+          </label>
+          <label class="radio-card ${card.urgency === 'normal' ? 'selected' : ''}" data-value="normal">
+            <input type="radio" name="urgent-${card.id}" value="normal" class="agenda-radio" data-card-id="${card.id}" ${card.urgency === 'normal' ? 'checked' : ''} />
+            <div class="radio-body">
+              <div class="radio-title">${escapeHtml(config.sec2.normalTitle)} <span class="badge normal">Normal</span></div>
+              <div class="radio-desc">${escapeHtml(config.sec2.normalDesc)}</div>
+            </div>
+          </label>
+        </div>
+      </div>
+    `;
+    list.appendChild(wrap);
+
+    // 값 채우기
+    wrap.querySelector('[data-field="title"]').value = card.title;
+    wrap.querySelector('[data-field="content"]').value = card.content;
+    wrap.querySelector('[data-field="reason"]').value = card.reason;
+  });
+
+  // 이벤트 바인딩
+  list.querySelectorAll('.agenda-field').forEach(el => {
+    el.addEventListener('input', function() {
+      const c = agendaCards.find(x => x.id === this.dataset.cardId);
+      if (!c) return;
+      c[this.dataset.field] = this.value;
+      this.classList.remove('error-mark');
+    });
+  });
+  list.querySelectorAll('.agenda-radio').forEach(el => {
+    el.addEventListener('change', function() {
+      const c = agendaCards.find(x => x.id === this.dataset.cardId);
+      if (!c) return;
+      c.urgency = this.value;
+      // 같은 카드 내 다른 라디오 카드 시각 갱신
+      const cardEl = this.closest('.agenda-item');
+      cardEl.querySelectorAll('.radio-card').forEach(rc => rc.classList.remove('selected'));
+      this.closest('.radio-card').classList.add('selected');
+    });
+  });
+  list.querySelectorAll('.radio-card').forEach(rc => {
+    rc.addEventListener('click', function() {
+      // input change 이벤트가 처리하지만, 클릭 즉시 시각 반영을 위해
+      const cardEl = this.closest('.agenda-item');
+      cardEl.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      this.classList.add('selected');
+    });
+  });
+  list.querySelectorAll('[data-action="remove"]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (agendaCards.length <= 1) return;
+      const cardId = this.dataset.cardId;
+      const c = agendaCards.find(x => x.id === cardId);
+      const hasContent = c && (c.title || c.content || c.reason || c.urgency);
+      if (hasContent && !confirm('이 아젠다를 삭제하시겠습니까? 입력하신 내용이 사라집니다.')) return;
+      agendaCards = agendaCards.filter(x => x.id !== cardId);
+      renderAgendaCards();
+    });
+  });
+
+  // 포커스 복원
+  if (focusInfo) {
+    const restored = list.querySelector(`[data-card-id="${focusInfo.cardId}"][data-field="${focusInfo.field}"]`);
+    if (restored) {
+      restored.focus();
+      if (focusInfo.selStart != null) {
+        try { restored.setSelectionRange(focusInfo.selStart, focusInfo.selEnd); } catch (e) {}
+      }
+    }
+  }
+}
+
+function addAgendaCard() {
+  agendaCards.push({ id: genId(), title: '', content: '', reason: '', urgency: '' });
+  renderAgendaCards();
+  // 새로 추가된 카드로 스크롤 + 첫 입력 포커스
+  setTimeout(() => {
+    const items = document.querySelectorAll('.agenda-item');
+    const last = items[items.length - 1];
+    if (last) {
+      last.scrollIntoView({ behavior:'smooth', block:'center' });
+      last.querySelector('[data-field="title"]')?.focus();
+    }
+  }, 50);
+}
+
+$('add-agenda-btn').addEventListener('click', addAgendaCard);
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  공개 폼 동작                                                   ║
+// ╚════════════════════════════════════════════════════════════════╝
+$('is_anonymous').addEventListener('change', function() {
+  const name = $('writer_name');
+  if (this.checked) { name.value='익명'; name.disabled=true; }
+  else { name.value=''; name.disabled=false; name.focus(); }
+});
+
+function showAlert(msg) {
+  $('alert-msg').textContent = msg;
+  $('alert').classList.add('show');
+  $('confirm-strip').classList.remove('show');
+  $('alert').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+function hideAlert() { $('alert').classList.remove('show'); }
+
+function validateForm() {
+  // 모든 카드의 필수 필드를 검증
+  let firstErrorCard = null;
+  const errors = []; // [{cardIdx, missingFields:[]}]
+  // 시각적 에러 마크 초기화
+  document.querySelectorAll('.agenda-field').forEach(el => el.classList.remove('error-mark'));
+
+  agendaCards.forEach((card, idx) => {
+    const missingFields = [];
+    if (!card.title.trim()) missingFields.push(config.sec2.titleLabel);
+    if (!card.content.trim()) missingFields.push(config.sec2.contentLabel);
+    if (!card.reason.trim()) missingFields.push(config.sec2.reasonLabel);
+    if (!card.urgency) missingFields.push(config.sec2.urgencyLabel);
+    if (missingFields.length) {
+      errors.push({ cardIdx: idx + 1, missingFields, cardId: card.id });
+      if (!firstErrorCard) firstErrorCard = card.id;
+      // 해당 카드의 비어있는 필드에 에러 마크
+      const cardEl = document.querySelector(`.agenda-item[data-card-id="${card.id}"]`);
+      if (cardEl) {
+        if (!card.title.trim()) cardEl.querySelector('[data-field="title"]')?.classList.add('error-mark');
+        if (!card.content.trim()) cardEl.querySelector('[data-field="content"]')?.classList.add('error-mark');
+        if (!card.reason.trim()) cardEl.querySelector('[data-field="reason"]')?.classList.add('error-mark');
+      }
+    }
+  });
+  return { errors, firstErrorCard };
+}
+
+$('submit-btn').addEventListener('click', () => {
+  if (isExpired) return;
+  hideAlert();
+  const { errors, firstErrorCard } = validateForm();
+  if (errors.length > 0) {
+    const parts = errors.map(e => `아젠다 ${e.cardIdx}: ${e.missingFields.join(', ')}`);
+    showAlert('필수 항목을 확인해 주세요 — ' + parts.join(' / '));
+    if (firstErrorCard) {
+      const el = document.querySelector(`.agenda-item[data-card-id="${firstErrorCard}"]`);
+      el?.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+    return;
+  }
+  // 확인 스트립의 안내 문구 업데이트 (다중 시)
+  const count = agendaCards.length;
+  const confirmTitleEl = $('confirm-strip').querySelector('.confirm-title');
+  const confirmTextEl = $('confirm-strip').querySelector('.confirm-text');
+  if (count > 1) {
+    confirmTitleEl.textContent = `${count}개의 아젠다를 함께 제출합니다. 제출 후에는 수정·삭제가 불가능합니다.`;
+  } else {
+    confirmTitleEl.textContent = '제출 후에는 수정·삭제가 불가능합니다.';
+  }
+  confirmTextEl.textContent = "작성하신 내용을 다시 한 번 확인하셨다면 아래 '제출 확정'을 눌러주세요. 추가로 의견이 생기면 마감 전까지 새 글로 제출하실 수 있습니다.";
+
+  $('confirm-strip').classList.add('show');
+  $('confirm-strip').scrollIntoView({ behavior:'smooth', block:'center' });
+});
+
+$('cancel-btn').addEventListener('click', () => $('confirm-strip').classList.remove('show'));
+
+$('final-btn').addEventListener('click', async () => {
+  if (!firebaseReady) { showAlert('Firebase 미설정으로 제출할 수 없습니다. 관리자에게 문의해 주세요.'); return; }
+  const { errors } = validateForm();
+  if (errors.length > 0) { showAlert('필수 항목을 확인해 주세요.'); return; }
+
+  const feedbacks = [];
+  document.querySelectorAll('.confirmed-feedback').forEach((el, i) => {
+    feedbacks.push({ agenda_title: config.sec3.items[i]?.title || '', value: el.value.trim() });
+  });
+
+  const groupId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const writerName = $('is_anonymous').checked ? '익명' : $('writer_name').value.trim();
+  const isAnon = $('is_anonymous').checked;
+  const nowIso = new Date().toISOString();
+  const totalCount = agendaCards.length;
+
+  $('final-btn').disabled = true;
+  $('final-btn').textContent = '제출 중...';
+
+  try {
+    // 각 카드를 개별 문서로 제출 (동일 group_id 공유)
+    const tasks = agendaCards.map((card, idx) => {
+      const payload = {
+        writer_name: writerName,
+        is_anonymous: isAnon,
+        agenda_title: card.title.trim(),
+        agenda_content: card.content.trim(),
+        reason_required: card.reason.trim(),
+        is_urgent: card.urgency,
+        confirmed_feedback: feedbacks,
+        submission_group_id: groupId,
+        submission_group_index: idx + 1,
+        submission_group_total: totalCount,
+        submitted_at: serverTimestamp(),
+        submitted_at_iso: nowIso
+      };
+      return addDoc(collection(db, SUBMISSIONS_PATH), payload);
+    });
+    await Promise.all(tasks);
+
+    submissionCount += totalCount;
+    $('success-count').textContent = totalCount > 1
+      ? `${totalCount}개의 아젠다 제출 완료 (누적 ${submissionCount}개)`
+      : `${submissionCount}번째 제출 완료`;
+    $('form-wrapper').style.display = 'none';
+    $('success').classList.add('show');
+    $('success').scrollIntoView({ behavior:'smooth', block:'center' });
+  } catch (e) {
+    showAlert('제출 실패: ' + e.message);
+    console.error(e);
+  } finally {
+    $('final-btn').disabled = false;
+    $('final-btn').textContent = '제출 확정';
+  }
+});
+
+$('another-btn').addEventListener('click', () => {
+  // 아젠다 카드 1개로 리셋
+  agendaCards = [{ id: genId(), title: '', content: '', reason: '', urgency: '' }];
+  renderAgendaCards();
+  document.querySelectorAll('.confirmed-feedback').forEach(el => el.value='');
+  hideAlert(); $('confirm-strip').classList.remove('show');
+  $('success').classList.remove('show');
+  $('form-wrapper').style.display='';
+  document.querySelector('.agenda-field[data-field="title"]')?.focus();
+  document.querySelector('#agenda-list')?.scrollIntoView({ behavior:'smooth', block:'center' });
+});
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  관리자 — 폼 ↔ config 양방향 바인딩                             ║
+// ╚════════════════════════════════════════════════════════════════╝
+const bindings = {
+  'cfg-deadline': ['deadline'],
+  'cfg-hero-eyebrow': ['hero','eyebrow'],
+  'cfg-hero-title': ['hero','title'],
+  'cfg-hero-desc': ['hero','description'],
+  'cfg-sec1-heading': ['sec1','heading'],
+  'cfg-sec1-nameLabel': ['sec1','nameLabel'],
+  'cfg-sec1-namePlaceholder': ['sec1','namePlaceholder'],
+  'cfg-sec1-anonLabel': ['sec1','anonLabel'],
+  'cfg-sec1-anonDesc': ['sec1','anonDesc'],
+  'cfg-sec2-heading': ['sec2','heading'],
+  'cfg-sec2-sub': ['sec2','sub'],
+  'cfg-sec2-titleLabel': ['sec2','titleLabel'],
+  'cfg-sec2-titlePlaceholder': ['sec2','titlePlaceholder'],
+  'cfg-sec2-contentLabel': ['sec2','contentLabel'],
+  'cfg-sec2-contentPlaceholder': ['sec2','contentPlaceholder'],
+  'cfg-sec2-reasonLabel': ['sec2','reasonLabel'],
+  'cfg-sec2-reasonPlaceholder': ['sec2','reasonPlaceholder'],
+  'cfg-sec2-reasonHint': ['sec2','reasonHint'],
+  'cfg-sec2-urgencyLabel': ['sec2','urgencyLabel'],
+  'cfg-sec2-urgentTitle': ['sec2','urgentTitle'],
+  'cfg-sec2-urgentDesc': ['sec2','urgentDesc'],
+  'cfg-sec2-normalTitle': ['sec2','normalTitle'],
+  'cfg-sec2-normalDesc': ['sec2','normalDesc'],
+  'cfg-sec3-heading': ['sec3','heading'],
+  'cfg-sec3-sub': ['sec3','sub']
+};
+
+function applyConfigToAdminForm() {
+  Object.entries(bindings).forEach(([id, path]) => {
+    const el = $(id);
+    if (!el) return;
+    let val = config;
+    path.forEach(p => { val = val?.[p]; });
+    if (document.activeElement !== el) el.value = val || '';
+  });
+  renderConfirmedAdmin();
+}
+
+function applyAdminFormToConfig(id) {
+  const path = bindings[id];
+  if (!path) return;
+  let obj = config;
+  for (let i = 0; i < path.length - 1; i++) {
+    if (!obj[path[i]]) obj[path[i]] = {};
+    obj = obj[path[i]];
+  }
+  obj[path[path.length - 1]] = $(id).value;
+}
+
+function renderConfirmedAdmin() {
+  const container = $('confirmed-items');
+  const activeId = document.activeElement?.dataset?.idx + '|' + document.activeElement?.dataset?.key;
+  container.innerHTML = '';
+  config.sec3.items.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <div class="item-head">
+        <span class="item-title">확정 아젠다 ${idx + 1}</span>
+        <div class="item-actions">
+          <button type="button" class="icon-btn" data-action="delete" data-idx="${idx}" title="삭제" ${config.sec3.items.length <= 1 ? 'disabled' : ''}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="admin-field"><label class="admin-label">태그 라벨</label><input type="text" class="admin-input ci" data-idx="${idx}" data-key="tag" /></div>
+        <div class="admin-field"><label class="admin-label">아젠다 제목</label><input type="text" class="admin-input ci" data-idx="${idx}" data-key="title" /></div>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">아젠다 설명 — 공개 페이지의 제목 아래에 표시됩니다</label>
+        <textarea class="admin-textarea lg ci" data-idx="${idx}" data-key="description"></textarea>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">의견 입력란 placeholder</label>
+        <textarea class="admin-textarea ci" data-idx="${idx}" data-key="placeholder"></textarea>
+      </div>
+    `;
+    container.appendChild(card);
+    card.querySelector('[data-key="tag"]').value = item.tag || '';
+    card.querySelector('[data-key="title"]').value = item.title || '';
+    card.querySelector('[data-key="description"]').value = item.description || '';
+    card.querySelector('[data-key="placeholder"]').value = item.placeholder || '';
+  });
+
+  container.querySelectorAll('.ci').forEach(el => {
+    el.addEventListener('input', function() {
+      const idx = parseInt(this.dataset.idx);
+      config.sec3.items[idx][this.dataset.key] = this.value;
+      debouncedSave();
+    });
+  });
+  container.querySelectorAll('[data-action="delete"]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const idx = parseInt(this.dataset.idx);
+      if (config.sec3.items.length <= 1) return;
+      if (!confirm(`'${config.sec3.items[idx].title}' 아젠다를 삭제하시겠습니까?`)) return;
+      config.sec3.items.splice(idx, 1);
+      saveConfig();
+      renderConfirmedAdmin();
+    });
+  });
+}
+
+Object.keys(bindings).forEach(id => {
+  const el = $(id);
+  if (!el) return;
+  el.addEventListener('input', () => {
+    applyAdminFormToConfig(id);
+    debouncedSave();
+  });
+});
+
+$('add-confirmed-btn').addEventListener('click', () => {
+  const n = config.sec3.items.length + 1;
+  config.sec3.items.push({
+    tag: `확정 ${n}`,
+    title: '새 확정 아젠다',
+    description: '',
+    placeholder: '의견을 자유롭게 적어주세요.'
+  });
+  saveConfig();
+  renderConfirmedAdmin();
+});
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  관리자 — 탭                                                    ║
+// ╚════════════════════════════════════════════════════════════════╝
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    $('panel-' + this.dataset.tab).classList.add('active');
+    if (this.dataset.tab === 'submissions') renderSubmissions();
+  });
+});
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  관리자 — 제출 목록                                             ║
+// ╚════════════════════════════════════════════════════════════════╝
+function formatSubmittedAt(sub) {
+  let d;
+  if (sub.submitted_at?.toDate) d = sub.submitted_at.toDate();
+  else if (sub.submitted_at_iso) d = new Date(sub.submitted_at_iso);
+  else return '—';
+  const y = d.getFullYear(), mo = pad(d.getMonth()+1), da = pad(d.getDate());
+  const h = pad(d.getHours()), mi = pad(d.getMinutes());
+  return `${y}.${mo}.${da} ${h}:${mi}`;
+}
+
+function renderSubmissions() {
+  $('stat-total').textContent = submissions.length;
+  $('stat-urgent').textContent = submissions.filter(s => s.is_urgent === 'urgent').length;
+  $('stat-anon').textContent = submissions.filter(s => s.is_anonymous).length;
+  $('submission-badge').textContent = submissions.length;
+
+  const list = $('submission-list');
+  if (submissions.length === 0) {
+    list.innerHTML = '<div class="sub-empty">아직 제출된 아젠다가 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  submissions.forEach(sub => {
+    const row = document.createElement('div');
+    row.className = 'sub-row';
+    const urgClass = sub.is_urgent === 'urgent' ? 'urgent' : 'normal';
+    const urgText = sub.is_urgent === 'urgent' ? 'Urgent' : 'Normal';
+    const writerCls = sub.is_anonymous ? 'sub-writer anon' : 'sub-writer';
+    let feedbackHtml = '';
+    if (sub.confirmed_feedback?.length) {
+      const filled = sub.confirmed_feedback.filter(f => f.value);
+      if (filled.length) {
+        feedbackHtml = '<div class="sub-meta">' +
+          filled.map(f => `<div><span class="sub-meta-label">[${escapeHtml(f.agenda_title)}]</span> ${escapeHtml(f.value)}</div>`).join('') +
+          '</div>';
+      }
+    }
+    row.innerHTML = `
+      <div class="sub-header-row">
+        <span class="${writerCls}">${escapeHtml(sub.writer_name || '익명')}</span>
+        <span class="sub-urgency ${urgClass}">${urgText}</span>
+        <span class="sub-time" style="margin-left:auto;">${formatSubmittedAt(sub)}</span>
+      </div>
+      <div class="sub-title">${escapeHtml(sub.agenda_title)}</div>
+      <div class="sub-content">${escapeHtml(sub.agenda_content)}</div>
+      <div class="sub-meta">
+        <div><span class="sub-meta-label">논의 필요 이유</span> ${escapeHtml(sub.reason_required)}</div>
+      </div>
+      ${feedbackHtml}
+    `;
+    list.appendChild(row);
+  });
+}
+
+$('export-csv-btn').addEventListener('click', () => {
+  if (submissions.length === 0) { showToast('내보낼 제출이 없습니다'); return; }
+  const headers = ['제출시각','작성자','익명여부','시급성','아젠다 제목','아젠다 내용','논의 필요 이유'];
+  const maxFb = Math.max(...submissions.map(s => (s.confirmed_feedback||[]).length));
+  for (let i = 0; i < maxFb; i++) headers.push(`확정${i+1} 제목`, `확정${i+1} 의견`);
+  const rows = [headers];
+  submissions.forEach(s => {
+    const r = [
+      formatSubmittedAt(s),
+      s.writer_name || '',
+      s.is_anonymous ? 'Y' : 'N',
+      s.is_urgent === 'urgent' ? 'Urgent' : 'Normal',
+      s.agenda_title || '',
+      s.agenda_content || '',
+      s.reason_required || ''
+    ];
+    for (let i = 0; i < maxFb; i++) {
+      const f = (s.confirmed_feedback||[])[i] || { agenda_title:'', value:'' };
+      r.push(f.agenda_title, f.value);
+    }
+    rows.push(r);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const now = new Date();
+  a.download = `qlm_submissions_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`${submissions.length}건을 CSV로 내보냈습니다`);
+});
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  관리자 — 위험 영역                                             ║
+// ╚════════════════════════════════════════════════════════════════╝
+let resetClicked = false;
+$('reset-config-btn').addEventListener('click', async function() {
+  if (!resetClicked) {
+    this.textContent = '한 번 더 누르면 초기화';
+    resetClicked = true;
+    setTimeout(() => { this.textContent = '설정 초기화'; resetClicked = false; }, 3000);
+    return;
+  }
+  config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  await saveConfig();
+  applyConfigToAdminForm();
+  this.textContent = '설정 초기화';
+  resetClicked = false;
+  showToast('설정이 초기화되었습니다');
+});
+
+let clearClicked = false;
+$('clear-submissions-btn').addEventListener('click', async function() {
+  if (!clearClicked) {
+    this.textContent = '한 번 더 누르면 전체 삭제';
+    clearClicked = true;
+    setTimeout(() => { this.textContent = '전체 제출 삭제'; clearClicked = false; }, 3000);
+    return;
+  }
+  if (!firebaseReady) return;
+  this.disabled = true;
+  this.textContent = '삭제 중...';
+  try {
+    const snap = await getDocs(collection(db, SUBMISSIONS_PATH));
+    const deletes = [];
+    snap.forEach(d => deletes.push(deleteDoc(d.ref)));
+    await Promise.all(deletes);
+    showToast('모든 제출 데이터가 삭제되었습니다');
+  } catch (e) {
+    showToast('삭제 실패: ' + e.message);
+  } finally {
+    this.disabled = false;
+    this.textContent = '전체 제출 삭제';
+    clearClicked = false;
+  }
+});
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  로그인 / 라우팅                                                ║
+// ╚════════════════════════════════════════════════════════════════╝
+const SESSION_KEY = 'qlm_admin_session';
+
+function showLogin() {
+  $('login-overlay').classList.add('show');
+  $('login-error').textContent = '';
+  $('login-input').value = '';
+  setTimeout(() => $('login-input').focus(), 100);
+}
+function hideLogin() {
+  $('login-overlay').classList.remove('show');
+}
+
+let previewMode = false;
+
+function goAdmin() {
+  previewMode = false;
+  $('preview-banner').classList.remove('show');
+  $('public-view').classList.remove('active');
+  $('admin-view').classList.add('active');
+  applyConfigToAdminForm();
+  renderSubmissions();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function goPublic() {
+  previewMode = false;
+  $('preview-banner').classList.remove('show');
+  $('admin-view').classList.remove('active');
+  $('public-view').classList.add('active');
+  history.replaceState(null, '', window.location.pathname);
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function enterPreview() {
+  previewMode = true;
+  $('admin-view').classList.remove('active');
+  $('public-view').classList.add('active');
+  $('preview-banner').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+$('admin-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  if (sessionStorage.getItem(SESSION_KEY) === '1') goAdmin();
+  else showLogin();
+});
+
+$('login-cancel').addEventListener('click', () => {
+  hideLogin();
+  history.replaceState(null, '', window.location.pathname);
+});
+
+function tryLogin() {
+  const v = $('login-input').value;
+  if (v === ADMIN_PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    hideLogin();
+    goAdmin();
+  } else {
+    $('login-input').classList.add('error');
+    $('login-error').textContent = '비밀번호가 올바르지 않습니다.';
+    setTimeout(() => $('login-input').classList.remove('error'), 1200);
+  }
+}
+$('login-submit').addEventListener('click', tryLogin);
+$('login-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
+
+$('logout-btn').addEventListener('click', () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  goPublic();
+});
+
+$('preview-btn').addEventListener('click', enterPreview);
+$('exit-preview-btn').addEventListener('click', goAdmin);
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  초기화                                                          ║
+// ╚════════════════════════════════════════════════════════════════╝
+renderPublicForm();
+subscribeConfig();
+subscribeSubmissions();
+
+// 진입 시점에 admin 인증 여부 확인
+if (sessionStorage.getItem(SESSION_KEY) === '1') {
+  goAdmin();
+} else if (window.location.hash === '#admin') {
+  showLogin();
+}
+</script>
+</body>
+</html>
