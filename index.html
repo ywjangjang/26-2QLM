@@ -90,6 +90,47 @@
   .hero h1 { font-size: 28px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.02em; line-height: 1.35; }
   .hero p { font-size: 16px; line-height: 1.7; color: var(--text-secondary); margin: 0; max-width: 580px; }
 
+  /* Public tab nav */
+  .public-tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 24px; }
+  .public-tab { flex: 1; padding: 12px 14px; border-radius: 7px; font-size: 15px; font-weight: 500; cursor: pointer; color: var(--text-secondary); border: none; background: transparent; font-family: inherit; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .public-tab:hover { color: var(--text-primary); }
+  .public-tab.active { background: var(--text-primary); color: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .public-tab.active:hover { color: var(--surface); }
+  .public-tab .count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px; font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--text-secondary); border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .public-tab.active .count { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.95); }
+  .public-tab-pane { display: none; }
+  .public-tab-pane.active { display: block; }
+
+  /* Public submissions list */
+  .public-sub-intro { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+  .public-sub-intro-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .public-sub-intro-text { font-size: 14px; color: var(--text-secondary); line-height: 1.55; }
+  .public-sub-intro-text strong { color: var(--text-primary); font-weight: 600; }
+  .public-sub-list { display: flex; flex-direction: column; gap: 14px; }
+  .public-sub-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px 26px; transition: border-color 0.15s, box-shadow 0.15s; }
+  .public-sub-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+  .public-sub-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .public-sub-writer { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .public-sub-writer.anon { color: var(--text-tertiary); font-weight: 500; }
+  .public-sub-writer-icon { width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+  .public-sub-time { font-size: 13px; color: var(--text-tertiary); margin-left: auto; font-variant-numeric: tabular-nums; }
+  .public-sub-urgency { font-size: 12px; padding: 2px 9px; border-radius: 999px; font-weight: 500; letter-spacing: 0.02em; }
+  .public-sub-urgency.urgent { background: var(--danger-bg); color: var(--danger); }
+  .public-sub-urgency.normal { background: var(--success-bg); color: var(--success); }
+  .public-sub-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0 0 10px; letter-spacing: -0.01em; line-height: 1.4; }
+  .public-sub-content { font-size: 15px; color: var(--text-secondary); line-height: 1.7; margin: 0 0 14px; white-space: pre-wrap; word-break: break-word; }
+  .public-sub-reason { background: var(--surface-2); border-radius: var(--radius-md); padding: 12px 16px; }
+  .public-sub-reason-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+  .public-sub-reason-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin: 0; white-space: pre-wrap; word-break: break-word; }
+  .public-sub-feedback { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border-strong); display: flex; flex-direction: column; gap: 6px; }
+  .public-sub-feedback-item { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+  .public-sub-feedback-label { font-weight: 600; color: var(--text-tertiary); font-size: 12px; letter-spacing: 0.02em; }
+  .public-sub-empty { padding: 60px 24px; text-align: center; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); }
+  .public-sub-empty-icon { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 50%; background: var(--surface-2); color: var(--text-tertiary); display: flex; align-items: center; justify-content: center; }
+  .public-sub-empty h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; color: var(--text-secondary); }
+  .public-sub-empty p { font-size: 14px; color: var(--text-tertiary); margin: 0; line-height: 1.55; }
+  .public-sub-group-meta { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; background: var(--accent-bg); color: var(--accent); border-radius: 999px; font-weight: 500; }
+
   .countdown { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 24px; }
   .countdown-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
   .countdown-icon { width: 38px; height: 38px; border-radius: 50%; background: #FCE5E3; color: #B8413A; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(184, 65, 58, 0.06); }
@@ -358,23 +399,35 @@
       <p id="hero-desc">여러분의 생생한 의견이 회의의 방향을 만듭니다.</p>
     </header>
 
-    <div class="countdown" id="countdown">
-      <div class="countdown-left">
-        <div class="countdown-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-        </div>
-        <div>
-          <div class="countdown-label" id="cd-label">제출 마감까지</div>
-          <div class="countdown-deadline" id="cd-deadline">—</div>
-        </div>
-      </div>
-      <div class="countdown-units">
-        <div class="cu"><div class="cu-num" id="cd-d">00</div><div class="cu-unit">DAYS</div></div>
-        <div class="cu"><div class="cu-num" id="cd-h">00</div><div class="cu-unit">HOURS</div></div>
-        <div class="cu"><div class="cu-num" id="cd-m">00</div><div class="cu-unit">MIN</div></div>
-        <div class="cu"><div class="cu-num" id="cd-s">00</div><div class="cu-unit">SEC</div></div>
-      </div>
+    <div class="public-tabs">
+      <button type="button" class="public-tab active" data-pubtab="form">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        아젠다 작성하기
+      </button>
+      <button type="button" class="public-tab" data-pubtab="view">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        모아보기 <span class="count" id="public-tab-count">0</span>
+      </button>
     </div>
+
+    <div class="public-tab-pane active" id="tab-form">
+      <div class="countdown" id="countdown">
+        <div class="countdown-left">
+          <div class="countdown-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <div>
+            <div class="countdown-label" id="cd-label">제출 마감까지</div>
+            <div class="countdown-deadline" id="cd-deadline">—</div>
+          </div>
+        </div>
+        <div class="countdown-units">
+          <div class="cu"><div class="cu-num" id="cd-d">00</div><div class="cu-unit">DAYS</div></div>
+          <div class="cu"><div class="cu-num" id="cd-h">00</div><div class="cu-unit">HOURS</div></div>
+          <div class="cu"><div class="cu-num" id="cd-m">00</div><div class="cu-unit">MIN</div></div>
+          <div class="cu"><div class="cu-num" id="cd-s">00</div><div class="cu-unit">SEC</div></div>
+        </div>
+      </div>
 
     <div id="form-wrapper">
       <section class="section">
@@ -456,6 +509,31 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M12 5v14M5 12h14"/></svg>
           다른 아젠다도 제출하기
         </button>
+        <button type="button" class="btn-another" id="goto-view-btn" style="border-color: var(--text-tertiary); color: var(--text-secondary);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          다른 분들 아젠다 보기
+        </button>
+      </div>
+    </div>
+    </div><!-- /tab-form -->
+
+    <div class="public-tab-pane" id="tab-view">
+      <div class="public-sub-intro">
+        <div class="public-sub-intro-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div class="public-sub-intro-text">
+          참여자들이 지금까지 제출한 아젠다입니다. <strong>익명으로 제출한 분은 익명으로 표시</strong>되며, 새 글이 올라오면 자동으로 갱신됩니다.
+        </div>
+      </div>
+      <div class="public-sub-list" id="public-sub-list">
+        <div class="public-sub-empty">
+          <div class="public-sub-empty-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <h3>아직 제출된 아젠다가 없습니다</h3>
+          <p>첫 번째 의견을 남겨보세요!</p>
+        </div>
       </div>
     </div>
 
@@ -893,6 +971,11 @@ function subscribeSubmissions() {
       renderSubmissions();
     }
     $('submission-badge').textContent = submissions.length;
+    // 공개 모아보기 탭 카운트와 리스트 갱신
+    if ($('public-tab-count')) $('public-tab-count').textContent = submissions.length;
+    if ($('tab-view')?.classList.contains('active')) {
+      renderPublicSubmissions();
+    }
   }, (err) => console.error('제출 구독 실패:', err));
 }
 
@@ -1201,6 +1284,121 @@ $('another-btn').addEventListener('click', () => {
   document.querySelector('.agenda-field[data-field="title"]')?.focus();
   document.querySelector('#agenda-list')?.scrollIntoView({ behavior:'smooth', block:'center' });
 });
+
+// ╔════════════════════════════════════════════════════════════════╗
+// ║  공개 폼 — 탭 전환 + 모아보기                                    ║
+// ╚════════════════════════════════════════════════════════════════╝
+function switchPublicTab(tabName) {
+  document.querySelectorAll('.public-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.pubtab === tabName);
+  });
+  document.querySelectorAll('.public-tab-pane').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + tabName);
+  });
+  if (tabName === 'view') renderPublicSubmissions();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.public-tab').forEach(t => {
+  t.addEventListener('click', () => switchPublicTab(t.dataset.pubtab));
+});
+
+$('goto-view-btn').addEventListener('click', () => switchPublicTab('view'));
+
+function relativeTime(d) {
+  const diff = Date.now() - d.getTime();
+  if (diff < 60_000) return '방금 전';
+  if (diff < 3600_000) return Math.floor(diff / 60_000) + '분 전';
+  if (diff < 86400_000) return Math.floor(diff / 3600_000) + '시간 전';
+  if (diff < 7 * 86400_000) return Math.floor(diff / 86400_000) + '일 전';
+  const mo = d.getMonth() + 1, da = d.getDate();
+  const y = d.getFullYear();
+  const now = new Date();
+  if (y === now.getFullYear()) return `${mo}월 ${da}일`;
+  return `${y}.${pad(mo)}.${pad(da)}`;
+}
+
+function submittedDate(sub) {
+  if (sub.submitted_at?.toDate) return sub.submitted_at.toDate();
+  if (sub.submitted_at_iso) return new Date(sub.submitted_at_iso);
+  return new Date();
+}
+
+function writerInitial(name) {
+  const t = (name || '').trim();
+  if (!t) return '?';
+  return t.charAt(0);
+}
+
+function renderPublicSubmissions() {
+  const list = $('public-sub-list');
+  if (!list) return;
+  if (submissions.length === 0) {
+    list.innerHTML = `
+      <div class="public-sub-empty">
+        <div class="public-sub-empty-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <h3>아직 제출된 아젠다가 없습니다</h3>
+        <p>첫 번째 의견을 남겨보세요!</p>
+      </div>`;
+    return;
+  }
+  list.innerHTML = '';
+  submissions.forEach(sub => {
+    const card = document.createElement('article');
+    card.className = 'public-sub-card';
+
+    const writerName = sub.writer_name || '익명';
+    const isAnon = !!sub.is_anonymous;
+    const urgClass = sub.is_urgent === 'urgent' ? 'urgent' : 'normal';
+    const urgText = sub.is_urgent === 'urgent' ? 'Urgent' : 'Normal';
+    const timeText = relativeTime(submittedDate(sub));
+
+    // 다중 제출 그룹 정보 (있는 경우)
+    const groupBadge = (sub.submission_group_total && sub.submission_group_total > 1)
+      ? `<span class="public-sub-group-meta">한 번에 ${sub.submission_group_total}개 중 ${sub.submission_group_index || '?'}번째</span>`
+      : '';
+
+    // 확정 아젠다 의견 (값이 있는 것만)
+    let feedbackHtml = '';
+    if (Array.isArray(sub.confirmed_feedback)) {
+      const filled = sub.confirmed_feedback.filter(f => f && f.value);
+      if (filled.length) {
+        feedbackHtml = '<div class="public-sub-feedback">' +
+          filled.map(f => `
+            <div class="public-sub-feedback-item">
+              <span class="public-sub-feedback-label">[${escapeHtml(f.agenda_title || '확정 아젠다')}]</span>
+              ${escapeHtml(f.value)}
+            </div>
+          `).join('') + '</div>';
+      }
+    }
+
+    card.innerHTML = `
+      <div class="public-sub-head">
+        <span class="public-sub-writer ${isAnon ? 'anon' : ''}">
+          <span class="public-sub-writer-icon">${escapeHtml(writerInitial(writerName))}</span>
+          ${escapeHtml(writerName)}
+        </span>
+        <span class="public-sub-urgency ${urgClass}">${urgText}</span>
+        ${groupBadge}
+        <span class="public-sub-time">${timeText}</span>
+      </div>
+      <h3 class="public-sub-title">${escapeHtml(sub.agenda_title || '')}</h3>
+      <p class="public-sub-content">${escapeHtml(sub.agenda_content || '')}</p>
+      <div class="public-sub-reason">
+        <span class="public-sub-reason-label">논의 필요 이유</span>
+        <p class="public-sub-reason-text">${escapeHtml(sub.reason_required || '')}</p>
+      </div>
+      ${feedbackHtml}
+    `;
+    list.appendChild(card);
+  });
+}
+
+// 초기 카운트 표시
+if (submissions.length > 0 && $('public-tab-count')) $('public-tab-count').textContent = submissions.length;
 
 // ╔════════════════════════════════════════════════════════════════╗
 // ║  관리자 — 폼 ↔ config 양방향 바인딩                             ║
